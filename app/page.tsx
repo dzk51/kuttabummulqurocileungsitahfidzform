@@ -365,7 +365,7 @@ export default function KuttabForm() {
       <button
         onClick={() => {
           const pin = prompt("Masukkan PIN Admin:");
-          if (pin === "1234") setView("admin");
+          if (pin === "adminkuttabummulqurocileungsi") setView("admin");
           else if (pin) alert("PIN Salah!");
         }}
         className="absolute top-4 right-4 bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-900 transition-all"
