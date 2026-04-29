@@ -124,12 +124,15 @@ const dataSurah: Record<number, AyatRange[]> = {
   { nama: "Al-Fussilat", min: 1, max: 46 },
 ],
 25: [
-  { nama: "Al-Fussilat", min: 47, max: 54 },
-  { nama: "Asy-Syura", min: 1, max: 53 },
-  { nama: "Az-Zukhruf", min: 1, max: 89 },
-  { nama: "Ad-Dukhan", min: 1, max: 59 },
-  { nama: "Al-Jatsiyah", min: 1, max: 37 }, // ✅ FIX (32 → 37)
-],
+    { nama: "Al-Fussilat", min: 47, max: 54 },
+    { nama: "Asy-Syura", min: 1, max: 53 },
+    { nama: "Az-Zukhruf", min: 1, max: 89 },
+    { nama: "Ad-Dukhan", min: 1, max: 59 },
+    { nama: "Al-Jatsiyah", min: 1, max: 37 },
+  ], 
+};   
+
+  
 export default function KuttabForm() {
   const [view, setView] = useState<"form" | "admin">("form");
   const [listHafalan, setListHafalan] = useState<any[]>([]);
