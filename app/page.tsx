@@ -228,7 +228,15 @@ export default function KuttabForm() {
   const [foto, setFoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 2. AMBIL DATA REALTIME DARI SUPABASE
+  // 1. Logika Pengelompokan Data (Halaqoh Grouping)
+  const groupedData = listHafalan.reduce((acc, item) => {
+    const groupName = item.halaqoh || "Tanpa Halaqoh";
+    if (!acc[groupName]) acc[groupName] = [];
+    acc[groupName].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // 2. AMBIL DATA REALTIME
   useEffect(() => {
     const fetchInitialData = async () => {
       const { data } = await supabase
@@ -272,19 +280,13 @@ export default function KuttabForm() {
         }]);
 
       if (error) throw error;
-
-      alert("Data Berhasil Disimpan ke Supabase! 🚀");
+      alert("Data Berhasil Disimpan! 🚀");
 
       // Reset Form
-      setNama("");
-      setHalaqoh("");
-      setAyatDari("");
-      setAyatSampai("");
-      setFoto(null);
+      setNama(""); setHalaqoh(""); setAyatDari(""); setAyatSampai(""); setFoto(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
 
     } catch (error: any) {
-      console.error("Error detail:", error);
       alert("Gagal simpan: " + error.message);
     } finally {
       setLoading(false);
@@ -313,48 +315,67 @@ export default function KuttabForm() {
   // === TAMPILAN ADMIN ROOM ===
   if (view === "admin") {
     return (
-      <main className="min-h-screen bg-slate-900 p-4 font-sans text-white">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
+      <main className="min-h-screen bg-slate-900 p-4 font-sans text-white md:p-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-slate-700 pb-4">
             <h1 className="text-2xl font-black text-red-500">ADMIN ROOM <span className="text-white">KUTTAB</span></h1>
-            <button onClick={() => setView("form")} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold text-sm">
+            <button onClick={() => setView("form")} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold text-sm border border-slate-600 transition-colors">
               Kembali ke Form
             </button>
           </div>
 
-          <div className="bg-slate-800 rounded-2xl p-4 overflow-x-auto shadow-2xl">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-700 text-slate-300 uppercase">
-                <tr>
-                  <th className="p-4 rounded-tl-xl">Waktu</th>
-                  <th className="p-4">Nama Santri</th>
-                  <th className="p-4">Halaqoh</th>
-                  <th className="p-4">Juz</th>
-                  <th className="p-4">Surah & Ayat</th>
-                  <th className="p-4 rounded-tr-xl">Bukti Foto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listHafalan.length === 0 ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-slate-500 font-bold">Belum ada data setoran.</td></tr>
-                ) : (
-                  listHafalan.map((item) => (
-                    <tr key={item.id} className="border-b border-slate-700 hover:bg-slate-750">
-                      <td className="p-4 text-xs text-slate-400">{item.tanggal}</td>
-                      <td className="p-4 font-bold text-white">{item.nama}</td>
-                      <td className="p-4 text-slate-300">{item.halaqoh}</td>
-                      <td className="p-4"><span className="bg-red-900 text-red-300 px-2 py-1 rounded font-bold text-xs">Juz {item.juz}</span></td>
-                      <td className="p-4 text-slate-300">{item.surah} ({item.ayat})</td>
-                      <td className="p-4">
-                        {item.foto && <img src={item.foto} alt="Dokumentasi" className="h-10 w-16 object-cover rounded border border-slate-600 hover:scale-150 transition-transform cursor-pointer" />}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {Object.keys(groupedData).length === 0 ? (
+            <div className="bg-slate-800 rounded-2xl p-12 text-center text-slate-500 font-bold">Belum ada data setoran.</div>
+          ) : (
+            <div className="space-y-10">
+              {Object.keys(groupedData).map((groupName) => (
+                <div key={groupName} className="space-y-4">
+                  {/* Header Grup Halaqoh */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest text-slate-200">
+                      HALAQOH: <span className="text-red-500">{groupName}</span>
+                    </h2>
+                    <span className="bg-slate-700 text-[10px] px-2 py-1 rounded-md font-bold text-slate-400">
+                      {groupedData[groupName].length} SANTRI
+                    </span>
+                  </div>
+
+                  {/* Wrapper overflow-x-auto agar aman di HP */}
+                  <div className="bg-slate-800 rounded-2xl overflow-x-auto shadow-2xl border border-slate-700">
+                    <table className="w-full text-left text-sm min-w-[600px]">
+                      <thead className="bg-slate-700/50 text-slate-400 uppercase text-[10px] tracking-tighter">
+                        <tr>
+                          <th className="p-4 whitespace-nowrap">Waktu</th>
+                          <th className="p-4">Nama Santri</th>
+                          <th className="p-4">Juz</th>
+                          <th className="p-4">Surah & Ayat</th>
+                          <th className="p-4 text-center">Bukti</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-700">
+                        {groupedData[groupName].map((item) => (
+                          <tr key={item.id} className="hover:bg-slate-750 transition-colors">
+                            <td className="p-4 text-[10px] text-slate-500 whitespace-nowrap">{item.tanggal}</td>
+                            <td className="p-4 font-bold text-white uppercase">{item.nama}</td>
+                            <td className="p-4">
+                              <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded font-black text-[10px] border border-red-900/50 whitespace-nowrap">JUZ {item.juz}</span>
+                            </td>
+                            <td className="p-4 text-slate-300 font-medium">{item.surah} <span className="text-slate-500 text-xs">({item.ayat})</span></td>
+                            <td className="p-4 text-center">
+                              {item.foto && <img src={item.foto} alt="Bukti" className="h-10 w-10 mx-auto object-cover rounded-lg border border-slate-600 hover:scale-[2.5] hover:z-50 transition-transform cursor-zoom-in" />}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+        <p className="text-center text-slate-600 text-[10px] mt-20 font-bold uppercase tracking-[0.5em]">Dozku.Digital System</p>
       </main>
     );
   }
@@ -368,50 +389,39 @@ export default function KuttabForm() {
           if (pin === "adminkuttabummulqurocileungsi") setView("admin");
           else if (pin) alert("PIN Salah!");
         }}
-        className="absolute top-4 right-4 bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-900 transition-all"
+        className="absolute top-4 right-4 bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-900 transition-all z-10"
       >
         Admin Room 🔒
       </button>
 
-      <div className="max-w-xl mx-auto pt-10">
+      <div className="max-w-xl mx-auto pt-14 sm:pt-10">
         <p className="text-center text-red-700 font-bold text-sm mb-1 uppercase tracking-widest">
           {new Date().toLocaleDateString("id-ID", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
-        <h1 className="text-center text-3xl font-black text-slate-800 mb-6">KUTTAB<span className="text-red-600"> FORM</span></h1>
+        <h1 className="text-center text-3xl font-black text-slate-800 mb-6 uppercase">KUTTAB<span className="text-red-600"> FORM</span></h1>
 
-        <div className="bg-white rounded-[32px] p-6 shadow-xl border border-slate-200 border-t-8 border-t-red-600">
+        <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-xl border border-slate-200 border-t-8 border-t-red-600">
           <p className="text-center text-[11px] font-black text-slate-500 mb-6 uppercase tracking-wider">Kuttab Ummul Quro Cileungsi</p>
 
           <div className="space-y-6">
-            {/* Nama Santri */}
             <div>
               <label className="text-xs font-black text-slate-700 ml-2 uppercase">Nama Santri</label>
-              <input
-                type="text" placeholder="Masukkan nama..."
-                className="w-full mt-2 p-4 bg-white text-slate-900 font-bold rounded-2xl border-2 border-slate-300 focus:border-red-500 outline-none transition-all shadow-sm"
-                value={nama} onChange={(e) => setNama(e.target.value)}
-              />
+              <input type="text" placeholder="Masukkan nama..." className="w-full mt-2 p-4 bg-white text-slate-900 font-bold rounded-2xl border-2 border-slate-300 focus:border-red-500 outline-none transition-all shadow-sm" value={nama} onChange={(e) => setNama(e.target.value)} />
             </div>
 
-            {/* Nama Halaqoh */}
             <div>
               <label className="text-xs font-black text-slate-700 ml-2 uppercase">Nama Halaqoh</label>
-              <input
-                type="text" placeholder="Masukkan nama halaqoh..."
-                className="w-full mt-2 p-4 bg-white text-slate-900 font-bold rounded-2xl border-2 border-slate-300 focus:border-red-500 outline-none transition-all shadow-sm"
-                value={halaqoh} onChange={(e) => setHalaqoh(e.target.value)}
-              />
+              <input type="text" placeholder="Contoh: Ibn Abbas" className="w-full mt-2 p-4 bg-white text-slate-900 font-bold rounded-2xl border-2 border-slate-300 focus:border-red-500 outline-none transition-all shadow-sm" value={halaqoh} onChange={(e) => setHalaqoh(e.target.value)} />
             </div>
 
-            {/* Pilih Juz */}
             <div>
               <label className="text-xs font-black text-slate-700 ml-2 uppercase">Pilih Juz</label>
-              <div className="flex overflow-x-auto gap-2 mt-2 pb-2 scrollbar-hide">
+              <div className="flex overflow-x-auto gap-2 mt-2 pb-2 scrollbar-hide snap-x">
                 {Array.from({ length: 30 }, (_, i) => i + 1).map((j) => (
                   <button
                     key={j}
                     onClick={() => { setJuz(j); setSurahInfo({ nama: "", minAyat: 1, maxAyat: 0 }); setAyatDari(""); setAyatSampai(""); }}
-                    className={`shrink-0 px-5 py-3 rounded-xl text-sm font-black transition-all border-2 ${
+                    className={`shrink-0 snap-center px-5 py-3 rounded-xl text-sm font-black transition-all border-2 ${
                       juz === j ? 'bg-red-600 text-white border-red-600 shadow-md scale-105' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300'
                     }`}
                   >
@@ -421,7 +431,6 @@ export default function KuttabForm() {
               </div>
             </div>
 
-            {/* Nama Surah */}
             <div>
               <label className="text-xs font-black text-slate-700 ml-2 uppercase">Nama Surah</label>
               <select
@@ -442,7 +451,6 @@ export default function KuttabForm() {
               </select>
             </div>
 
-            {/* Input Ayat */}
             {surahInfo.maxAyat > 0 && (
               <div className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <div className="flex-1 text-center">
@@ -458,7 +466,6 @@ export default function KuttabForm() {
               </div>
             )}
 
-            {/* Dokumentasi */}
             <div>
               <label className="text-xs font-black text-slate-700 ml-2 uppercase mb-2 block">Dokumentasi</label>
               <input type="file" accept="image/*" capture="environment" hidden ref={fileInputRef} onChange={handleAmbilFoto} />
@@ -473,7 +480,6 @@ export default function KuttabForm() {
               {foto && <img src={foto} className="mt-4 rounded-2xl h-48 w-full object-cover border-4 border-slate-100 shadow-md" />}
             </div>
 
-            {/* Tombol Simpan */}
             <button
               onClick={handleSimpan}
               disabled={loading}
